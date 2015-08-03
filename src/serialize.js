@@ -56,7 +56,8 @@ function record(sel, idx, styles, res) {
     var temp = {
       s: [],
       a: [],
-      p: []
+      p: [],
+      n: []
     };
     var t = sel[i];
     var s = t.content();
@@ -82,13 +83,35 @@ function record(sel, idx, styles, res) {
               }
               i--;
               t = t.prev();
-              s = s.replace(/^(['"'])(.*)\1/, '$2');
+              s = s.replace(/^(['"])(.*)\1/, '$2');
               item.unshift(s);
             }
             temp.a.push({
               v: item,
               s: item.join('')
             });
+            break;
+          case ')':
+            var item;
+            i--;
+            item=[];
+            t=t.prev();
+            while(t){
+              s=t.content();
+              if(s=='('){
+                break;
+              }
+              item.unshift(s);
+              i--;
+              t=t.prev();
+            }
+            i--;
+            t=t.prev();
+            s=t.content();
+            temp.n.push([
+              s.replace(/^:+/, ''),
+              item.join('')
+            ]);
             break;
           case '+':
           case '>':
@@ -132,6 +155,28 @@ function record(sel, idx, styles, res) {
                 v: item,
                 s: item.join('')
               });
+              break;
+            case ')':
+              var item;
+              i--;
+              item=[];
+              t=t.prev();
+              while(t){
+                s=t.content();
+                if(s=='('){
+                  break;
+                }
+                item.unshift(s);
+                i--;
+                t=t.prev();
+              }
+              i--;
+              t=t.prev();
+              s=t.content();
+              temp.n.push([
+                s.replace(/^:+/, ''),
+                item.join('')
+              ]);
               break;
           }
           break;
@@ -221,6 +266,46 @@ function save(temp, res) {
       }
     });
     //排序后比对，可能重复，合并之如a:hover{...}a:hover{...}会生成2个hover数组
+    sort(pseudo, function(a, b) {
+      return a < b;
+    });
+    var isExist = -1;
+    for(var j = 0, len = pseudos.length; j < len; j++) {
+      if(pseudos[j][0].join(',') == pseudo.join(',')) {
+        isExist = j;
+        break;
+      }
+    }
+    if(isExist > -1) {
+      res = pseudos[isExist][1];
+    }
+    else {
+      var arr = [];
+      arr.push(pseudo);
+      res = {};
+      arr.push(res);
+      pseudos.push(arr);
+    }
+  }
+  //伪类有括号
+  if(temp.n.length){
+    res['_:'] = res['_:'] || [];
+    var pseudos = res['_:'];
+    var pseudo = [];
+    temp.n.forEach(function(item) {
+      //防止多次重复
+      var exit=false;
+      pseudo.forEach(function(p){
+        if(item.join(',')==p.join(',')){
+          exit=true;
+          return;
+        }
+      });
+      if(!exit){
+        pseudo.push(item);
+      }
+    });
+    //排序后比对，可能重复，合并
     sort(pseudo, function(a, b) {
       return a < b;
     });
