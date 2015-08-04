@@ -327,3 +327,73 @@ describe('join', function() {
     expect(res).to.eql({"a":{"_v":[[0,"margin:0"],[0,"padding:0"]],"_p":1}});
   });
 });
+
+describe('parentheses',function(){
+  it('simple',function(){
+    var s='a:b(n){margin:0}';
+    var res=jaw.parse(s);
+    expect(res).to.eql({"a":{"_:":[[[["b","n"]],{"_v":[[0,"margin:0"]],"_p":2}]]}});
+  });
+  it('multi',function(){
+    var s='a:b(n){margin:0} a:c(m){margin:1}';
+    var res=jaw.parse(s);
+    expect(res).to.eql({"a":{"_:":[[[["b","n"]],{"_v":[[0,"margin:0"]],"_p":2}],[[["c","m"]],{"_v":[[1,"margin:1"]],"_p":2}]]}});
+  });
+  it('multi 2',function(){
+    var s='a:b(n):c(m){margin:0}';
+    var res=jaw.parse(s);
+    expect(res).to.eql({"a":{"_:":[[[["c","m"],["b","n"]],{"_v":[[0,"margin:0"]],"_p":3}]]}});
+  });
+
+  it('repeat',function(){
+    var s='a:b(n){margin:0}a:b(n){padding:0}';
+    var res=jaw.parse(s);
+    expect(res).to.eql({"a":{"_:":[[[["b", "n"],],{"_v":[[0, "margin:0"],[1,"padding:0"]],"_p": 2}]]}});
+  });
+
+  it('repeat 2',function(){
+    var s='a:b(n):b(n){margin:0}';
+    var res=jaw.parse(s);
+    expect(res).to.eql({"a": {"_:": [[[["b","n"]],{"_v":[[0,"margin:0"]],"_p": 3}]]}});
+  });
+
+  it('to tagname',function(){
+    var s=':b(n){margin:0}';
+    var res=jaw.parse(s);
+    expect(res).to.eql({"_*":true,"*":{"_:":[[[["b", "n"],],{"_v":[[0, "margin:0"]],"_p": 1}]]}}); 
+  });
+
+  it('*',function(){
+    var s='*:b(n){margin:0}';
+    var res=jaw.parse(s);
+    expect(res).to.eql({"_*":true,"*":{"_:":[[[["b", "n"],],{"_v":[[0, "margin:0"]],"_p":2}]]}}); 
+  });
+
+  it(',', function() {
+    var s = 'a:c(n),b:c(n){margin:0}';
+    var res = jaw.parse(s);
+    expect(res).to.eql({"a":{"_:":[[[["c","n"]],{"_v":[[0,"margin:0"]],"_p": 2}]]},"b":{"_:":[[[["c", "n"]],{"_v":[[0,"margin:0"]],"_p": 2}]]}});
+  });
+
+  it('long', function() {
+    var s = 'div p a:b(n){margin:0}';
+    var res = jaw.parse(s);
+    expect(res).to.eql({"a":{"_:":[[[["b","n"]],{"p":{"div":{"_v":[[0,"margin:0"]],"_p":4}}}]]}});
+  });
+
+  it('*.', function() {
+    var s = '*.a:b(n){margin:0}';
+    var res = jaw.parse(s);
+    expect(res).to.eql({"_*":true,"_*.":true,"*.a":{"_:":[[[["b","n"]],{"_v":[[0,"margin:0"]],"_p":12}]]}});
+  });
+  it('*#', function() {
+    var s = '*#a:b(n){margin:0}';
+    var res = jaw.parse(s);
+    expect(res).to.eql({"_*":true,"_*#":true,"*#a":{"_:":[[[["b","n"]],{"_v":[[0,"margin:0"]],"_p":102}]]}});
+  });
+  it('*.#', function() {
+    var s = '*.a#b:c(n){margin:0}';
+    var res = jaw.parse(s);
+    expect(res).to.eql({"_*":true,"_*.#":true,"*.a#b":{"_:":[[[["c","n"]],{"_v":[[0,"margin:0"]],"_p":112}]]}});
+  });
+});
