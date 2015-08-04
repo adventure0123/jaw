@@ -208,6 +208,8 @@ function priority(token, s) {
     case Token.SIGN:
       if(s == ']') {
         return 10;
+      }else if(s==')'){
+        return 1;
       }
       break;
   }
